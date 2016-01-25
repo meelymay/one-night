@@ -18,8 +18,9 @@ class Night:
         s += 'Originals:\n'
         for p in self.originals:
             s += '\t%s = %s\n' % (p, self.originals[p])
-        for swap in self.swaps:
-            s += str(swap)
+        s += 'Swaps:\n'
+        for swap in self.swaps.values():
+            s += '\t%s\n' % swap
         s += 'Finals:\n'
         for p in self.finals:
             s += '\t%s = %s\n' % (p, self.finals[p])
@@ -47,7 +48,7 @@ class Night:
         swaps = swaps if swaps else self.swaps
         originals = originals if originals else dict(self.originals)
 
-        centers = [originals[x] for x in originals if x.active]
+        centers = [originals[x] for x in originals if not x.active]
         for r in filter(lambda x: x in self.roles, SWAPPERS):
             if r not in centers and r not in swaps:
                 return False
@@ -121,4 +122,3 @@ class Night:
             return True
 
         raise Exception('Unknown statement type %s' % statement)
-

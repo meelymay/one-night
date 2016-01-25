@@ -26,15 +26,6 @@ DEFAULT_ROLES = [Role(VILLAGER),
 
 
 class TestNight(unittest.TestCase):
-    def is_always_consistent_for_empty_night(self):
-        pass
-
-    def always_incorporates_for_empty_night(self):
-        pass
-
-    def same_statement_is_consistent(self):
-        pass
-
     def test_can_add_start_role(self):
         r = Role(VILLAGER)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
@@ -81,6 +72,14 @@ class TestNight(unittest.TestCase):
         self.assertTrue(n.incorporate(s1))
         self.assertTrue(n.incorporate(s2))
 
+    def test_more_than_one_role(self):
+        n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
+        r = Role(ROBBER)
+        s1 = Final(amelia, r)
+        s2 = Final(dan, r)
+        self.assertTrue(n.incorporate(s1))
+        self.assertFalse(n.incorporate(s2))
+
     def test_too_many_roles(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         r = Role(VILLAGER)
@@ -96,13 +95,67 @@ class TestNight(unittest.TestCase):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         self.assertFalse(n.incorporate(s))
 
-    def test_swap(self):
+    def test_empty_swap(self):
         t = Original(dan, Role(TROUBLEMAKER))
         s = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
         self.assertTrue(n.incorporate(t))
         self.assertTrue(n.incorporate(s))
+
+    def test_swap(self):
+        t = Original(dan, Role(TROUBLEMAKER))
+        v = Original(amelia, Role(VILLAGER))
+        w = Original(bob, Role(WEREWOLF))
+        swap = Swap(Role(TROUBLEMAKER), amelia, bob)
+        n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
+
+        self.assertTrue(n.incorporate(t))
+        self.assertTrue(n.incorporate(v))
+        self.assertTrue(n.incorporate(w))
+        self.assertTrue(n.incorporate(swap))
+
+    def test_unfinished_swap(self):
+        t = Original(dan, Role(TROUBLEMAKER))
+        v = Original(amelia, Role(VILLAGER))
+        w = Final(bob, Role(WEREWOLF))
+        swap = Swap(Role(TROUBLEMAKER), amelia, bob)
+        n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
+
+        self.assertTrue(n.incorporate(t))
+        self.assertTrue(n.incorporate(v))
+        self.assertTrue(n.incorporate(w))
+        self.assertTrue(n.incorporate(swap))
+
+    def test_lying_swap(self):
+        t = Original(dan, Role(TROUBLEMAKER))
+        v = Original(amelia, Role(VILLAGER))
+        w = Final(bob, Role(WEREWOLF))
+        c = Original(c1, Role(ROBBER))
+        swap = Swap(Role(TROUBLEMAKER), amelia, bob)
+        n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
+
+        self.assertTrue(n.incorporate(c))
+        self.assertTrue(n.incorporate(t))
+        self.assertTrue(n.incorporate(v))
+        self.assertTrue(n.incorporate(w))
+        self.assertFalse(n.incorporate(swap))
+
+    def test_verified_swap(self):
+        t = Original(dan, Role(TROUBLEMAKER))
+        v = Original(amelia, Role(VILLAGER))
+        v2 = Final(amelia, Role(WEREWOLF))
+        w = Original(bob, Role(WEREWOLF))
+        w2 = Final(bob, Role(VILLAGER))
+        swap = Swap(Role(TROUBLEMAKER), amelia, bob)
+        n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
+
+        self.assertTrue(n.incorporate(t))
+        self.assertTrue(n.incorporate(v))
+        self.assertTrue(n.incorporate(v2))
+        self.assertTrue(n.incorporate(w))
+        self.assertTrue(n.incorporate(w2))
+        self.assertTrue(n.incorporate(swap))
 
 if __name__ == '__main__':
     unittest.main()

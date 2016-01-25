@@ -26,6 +26,14 @@ class Night:
             s += '\t%s = %s\n' % (p, self.finals[p])
         return s
 
+    def deep_copy(self):
+        n = Night(self.roles, self.players)
+        n.originals = dict(self.originals)
+        n.finals = dict(self.finals)
+        n.swaps = dict(self.swaps)
+        n.statements = dict(self.statements)
+        return n
+
     def incorporate(self, statement, credibility=100, overwrite=False):
         if not self.is_consistent(statement) and not overwrite:
             return False

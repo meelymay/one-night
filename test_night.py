@@ -31,7 +31,7 @@ class TestNight(unittest.TestCase):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         s = Original(amelia, r)
         self.assertTrue(n.incorporate(s))
-        self.assertEqual(n.originals[amelia], r)
+        self.assertEqual(n.originals.get(amelia), r)
         self.assertTrue(n.is_consistent(s))
         s2 = Original(amelia, Role(WEREWOLF))
         self.assertFalse(n.is_consistent(s2))
@@ -55,7 +55,7 @@ class TestNight(unittest.TestCase):
         r = Role(VILLAGER)
         s = Final(amelia, r)
         self.assertTrue(n.incorporate(s))
-        self.assertEqual(n.finals[amelia], r)
+        self.assertEqual(n.finals.get(amelia), r)
 
     def test_can_add_start_and_final(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)

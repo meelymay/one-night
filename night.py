@@ -1,35 +1,32 @@
-import player
+import assignment
 from role import *
 from statement import *
 
 
 class Night:
     def __init__(self, roles, players):
-        self.originals = {}
-        self.roles = roles
+        empty_ass = {}
         for p in players:
-            self.originals[p] = None
-        self.finals = dict(self.originals)
+            empty_ass[p] = None
+        self.originals = assignment.Assignment(empty_ass, roles)
+        self.finals = assignment.Assignment(empty_ass, roles)
+        self.roles = roles
         self.swaps = {}
         self.statements = {}
 
     def __str__(self):
         s = ''
-        s += 'Originals:\n'
-        for p in self.originals:
-            s += '\t%s = %s\n' % (p, self.originals[p])
+        s += 'Originals:\n' + str(self.originals)
         s += 'Swaps:\n'
         for swap in self.swaps.values():
             s += '\t%s\n' % swap
-        s += 'Finals:\n'
-        for p in self.finals:
-            s += '\t%s = %s\n' % (p, self.finals[p])
+        s += 'Finals:\n' + str(self.finals)
         return s
 
     def deep_copy(self):
         n = Night(self.roles, self.players)
-        n.originals = dict(self.originals)
-        n.finals = dict(self.finals)
+        n.originals = self.originals.copy()
+        n.finals = self.finals.copy()
         n.swaps = dict(self.swaps)
         n.statements = dict(self.statements)
         return n
@@ -40,11 +37,14 @@ class Night:
 
         if statement.type == SWAP:
             self.swaps[statement.swapper] = statement
-        if statement.type in [FINAL, ORIGINAL]:
+        elif statement.type in [ORIGINAL, FINAL]:
             a = self.finals if statement.type == FINAL else self.originals
             p = statement.player
             r = statement.role
-            a[p] = r
+            a.assign(p, r)
+        else:
+            print 'Statement type %s does not exist.' % statement
+            return False
 
         # if self.has_all_swaps():
         #     self.finals = self.play_swaps()
@@ -52,37 +52,14 @@ class Night:
         self.statements[statement] = credibility
         return True
 
+    # TODO pretty sure has all swaps doesn't work
     def has_all_swaps(self, swaps=None, originals=None):
         swaps = swaps if swaps else self.swaps
-        originals = originals if originals else dict(self.originals)
+        originals = originals if originals else self.originals.copy()
 
-        centers = [originals[x] for x in originals if not x.active]
+        centers = originals.centers()
         for r in filter(lambda x: x in self.roles, SWAPPERS):
             if r not in centers and r not in swaps:
-                return False
-        return True
-
-    def play_swaps(self, swaps=None, originals=None):
-        swaps = swaps if swaps else self.swaps
-        originals = originals if originals else dict(self.originals)
-
-        for r in filter(lambda x: x in self.roles, SWAPPERS):
-            if r not in swaps:
-                continue
-            swap = swaps[r]
-            p1 = swap.p1
-            p2 = swap.p2
-
-            tmp = originals[p1]
-            originals[p1] = originals[p2]
-            originals[p2] = tmp
-
-        return originals
-
-    def matches(self, after_swap, finals):
-        for p in finals:
-            if finals[p] and after_swap[p] and after_swap[p] != finals[p]:
-                print 'Finals do not match after swapping!'
                 return False
         return True
 
@@ -94,37 +71,36 @@ class Night:
             swaps = dict(self.swaps)
             swaps[statement.swapper] = statement
             for swap in swaps.values():
-                if swap.swapper not in self.originals.values():
+                if not self.originals.has_role(swap.swapper):
                     print 'There is no %s in the game yet.' % swap.swapper
                     return False
-                if swap.swapper == ROBBER and self.originals[swap.p1] != ROBBER:
+                if swap.swapper == ROBBER and not self.originals.player_is_role(swap.p1, ROBBER):
                     print 'Robber must swap himself.'
                     return False
             if self.has_all_swaps(swaps=swaps):
-                if not self.matches(self.play_swaps(swaps=swaps), self.finals):
+                if not self.originals.play_swaps(swaps).matches(self.finals):
                     return False
             return True
 
         p = statement.player
         r = statement.role
 
-        total_r = len([x for x in self.roles if x == r])
         if statement.type in [FINAL, ORIGINAL]:
-            assignments = dict(self.originals) if statement.type == ORIGINAL else dict(self.finals)
-            if assignments[p] and assignments[p] != r:
-                print '%s is the %s, not the %s (%s).' % (p, assignments[p], r, ADVERB[statement.type])
+            assignments = self.originals.copy() if statement.type == ORIGINAL else self.finals.copy()
+            if not assignments.player_is_role(p, r, flex=True):
+                print '%s is the %s, not the %s (%s).' % (p, assignments.get(p), r, ADVERB[statement.type])
                 return False
-            assignments[p] = r
-            if len(filter(lambda x: assignments[x] == r, assignments)) > total_r:
-                print 'There are already %s %ss.' % (total_r, r)
+            assignments.assign(p, r)
+            if not assignments.consistent_role(r):
+                print 'There are too many %ss.' % r
                 return False
             if (statement.type == ORIGINAL and self.has_all_swaps(originals=assignments) and
-               not self.matches(self.play_swaps(originals=assignments), self.finals)):
+               not assignments.play_swaps(self.swaps).matches(self.finals)):
                 print 'Swaps after changing originals are inconsistent.'
                 return False
             elif (statement.type == FINAL and
                   self.has_all_swaps() and
-                  not self.matches(self.play_swaps(), assignments)):
+                  not self.originals.play_swaps(self.swaps).matches(assignments)):
                 print 'Swaps are inconsistent with new finals.'
                 return False
             return True

@@ -4,7 +4,7 @@ from role import SWAPPERS
 class Assignment:
     def __init__(self, players_to_roles, all_roles):
         self.all_roles = all_roles
-        self.originals = players_to_roles
+        self.originals = dict(players_to_roles)
 
     def play_swaps(self, swaps):
         originals = dict(self.originals)

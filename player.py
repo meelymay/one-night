@@ -3,6 +3,12 @@ class Player:
         self.name = name
         self.active = True
 
+    def inform(self, player, role):
+    	print '%s discovers: Player %s is %s.' % (self, player, role)
+
+    def select(self, options):
+    	return options[0]
+
     def __str__(self):
         return self.name
 

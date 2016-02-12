@@ -1,18 +1,19 @@
 import random
 from role import *
 from player import Player, Center
-import statement
 from assignment import Assignment
+
 
 class Game:
     def __init__(self, players, roles):
         if len(roles) != len(players) + 3:
-            raise 'you done fd up'
+            raise Exception('you done fd up. %s +3 != %s' % (players, roles))
 
         self.roles = [Role(r) for r in roles]
-        self.players = [Player(p) for p in players] + [Center(i) for i in range(3)]
+        self.players = [Player(p.name, inform=p.inform, ask=p.ask) for p in players] + [Center(i) for i in range(3)]
         self.assignment = Assignment({}, roles)
         self.assign()
+        self.inform_players()
         print self.assignment
 
     def assign(self):
@@ -51,10 +52,10 @@ class Game:
             for opponent in ps:
                 if player != opponent:
                     player.inform(opponent, WEREWOLF)
-            if len(ps) ==  1:
+            if len(ps) == 1:
                 opponent = player.select([p for p in self.players if not p.active])
                 player.inform(opponent, self.current.get(opponent))
-        
+
         r = MINION
         werewolves = ps
         ps = self.get_players_for_role(r)
@@ -119,9 +120,10 @@ class Game:
 
         print
         print self.current
+        return str(self.current)
 
 
 if __name__ == '__main__':
     g = Game(['amelia', 'dan', 'kavan', 'mike', 'connor', 'howard'],
-              [WEREWOLF, WEREWOLF, VILLAGER, INSOMNIAC, ROBBER, TROUBLEMAKER, SEER, MINION, DRUNK])
+             [WEREWOLF, WEREWOLF, VILLAGER, INSOMNIAC, ROBBER, TROUBLEMAKER, SEER, MINION, DRUNK])
     g.play_night()

@@ -2,6 +2,7 @@ import random
 from role import *
 from player import Player, Center
 from assignment import Assignment
+from collections import defaultdict
 
 
 class Game:
@@ -30,6 +31,9 @@ class Game:
             if player.active:
                 player.inform(player, self.assignment.get(player))
 
+    def active_players(self):
+        return [p for p in self.players if p.active]
+
     def get_players_for_role(self, role, solo=True):
         ps = filter(lambda x: self.assignment.get(x) == role and x.active, self.players)
         print 'Players for', role, [p.name for p in ps]
@@ -37,13 +41,23 @@ class Game:
             raise Exception('There should only be one %s.' % role)
         return ps
 
+    def vote(self):
+        votes = {}
+        for player in self.active_players():
+            choice = player.select(self.active_players() + [None])
+            if not choice:
+                return None
+            else:
+                votes[player.name] = choice.name
+        return votes
+
     def play_night(self):
         self.current = self.assignment.copy()
         r = DOPPLEGANGER
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opponent = player.select([p for p in self.players if p.active])
+            opponent = player.select(self.active_players())
             self.dopplegang = self.current.get(opponent)
 
         r = WEREWOLF
@@ -97,7 +111,7 @@ class Game:
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opp1 = player.select([p for p in self.players if p.active])
+            opp1 = player.select(self.active_players())
             opp2 = player.select([p for p in self.players if p.active and p != opp1])
             opp1_role = self.current.get(opp1)
             self.current.assign(opp1, self.current.get(opp2))

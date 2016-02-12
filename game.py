@@ -89,7 +89,10 @@ class Game:
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            active = player.select([True, False])
+            opponents_card = "A single opponent's card."
+            center_card = "Two cards from the center."
+            choice = player.select([opponents_card, center_card])
+            active = choice == opponents_card
             opponent = player.select([p for p in self.players if p.active == active])
             player.inform(opponent, self.current.get(opponent))
             if not active:

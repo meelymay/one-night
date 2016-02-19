@@ -1,6 +1,7 @@
 import random
 from role import *
 from player import Player, Center
+from statement import *
 from assignment import Assignment
 from collections import defaultdict
 
@@ -29,7 +30,9 @@ class Game:
     def inform_players(self):
         for player in self.players:
             if player.active:
-                player.inform(player, self.assignment.get(player))
+                msg = 'You look at your card.'
+                statement = Original(player, self.assignment.get(player))
+                player.inform(msg, statement)
 
     def active_players(self):
         return [p for p in self.players if p.active]
@@ -44,7 +47,8 @@ class Game:
     def vote(self):
         votes = {}
         for player in self.active_players():
-            choice = player.select(self.active_players() + [None])
+            msg = 'Who do you want to kill?'
+            choice = player.select(msg, self.active_players() + [None])
             if not choice:
                 return None
             else:
@@ -57,7 +61,8 @@ class Game:
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opponent = player.select(self.active_players())
+            msg = '%s, wake up. Select one other player\'s role to impersonate.' % r
+            opponent = player.select(msg, self.active_players())
             self.dopplegang = self.current.get(opponent)
 
         r = WEREWOLF
@@ -65,10 +70,12 @@ class Game:
         for player in ps:
             for opponent in ps:
                 if player != opponent:
-                    player.inform(opponent, WEREWOLF)
+                    msg = '%s, wake up. See the other werewolves.' % r
+                    player.inform(msg, Original(opponent, WEREWOLF))
             if len(ps) == 1:
-                opponent = player.select([p for p in self.players if not p.active])
-                player.inform(opponent, self.current.get(opponent))
+                msg = 'Werewolf, wake up. You may choose a card from the center to look at.'
+                opponent = player.select(msg, [p for p in self.players if not p.active])
+                player.inform('You learn:', Original(opponent, self.current.get(opponent)))
 
         r = MINION
         werewolves = ps
@@ -76,55 +83,65 @@ class Game:
         if ps:
             player = ps[0]
             for w in werewolves:
-                player.inform(w, WEREWOLF)
+                msg = '%s, wake up. See the werewolves.' % r
+                player.inform(msg, Original(w, WEREWOLF))
 
         r = MASON
         ps = self.get_players_for_role(r, solo=False)
         for player in ps:
             for opponent in ps:
                 if player != opponent:
-                    player.inform(opponent, MASON)
+                    msg = '%s, wake up. See the other masons.' % r
+                    player.inform(msg, Original(opponent, MASON))
 
         r = SEER
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opponents_card = "A single opponent's card."
-            center_card = "Two cards from the center."
-            choice = player.select([opponents_card, center_card])
+            opponents_card = 'A single opponent\'s card.'
+            center_card = 'Two cards from the center.'
+            msg = 'Seer, wake up. You may choose to look at one other player\'s card or two cards from the center.'
+            choice = player.select(msg, [opponents_card, center_card])
             active = choice == opponents_card
-            opponent = player.select([p for p in self.players if p.active == active])
-            player.inform(opponent, self.current.get(opponent))
+            msg = 'Seer, select a card to look at.'
+            opponent = player.select(msg, [p for p in self.players if p.active == active])
+            player.inform('You learn', Original(opponent, self.current.get(opponent)))
             if not active:
-                opponent = player.select([p for p in self.players if p.active == active])
-                player.inform(opponent, self.current.get(opponent))
+                opponent = player.select(msg, [p for p in self.players if p.active == active])
+                player.inform('You learn:', Original(opponent, self.current.get(opponent)))
 
         r = ROBBER
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opponent = player.select([p for p in self.players if p.active])
-            opponent_role = self.current.get(opponent)
-            player_role = self.current.get(player)
-            player.inform(opponent, opponent_role)
-            self.current.assign(player, opponent_role)
-            self.current.assign(opponent, player_role)
+            msg = 'Robber, wake. You may swap cards with one other player.'
+            opponent = player.select(msg, [p for p in self.players if p.active] + [None])
+            if opponent:
+                opponent_role = self.current.get(opponent)
+                player_role = self.current.get(player)
+                player.inform(opponent, opponent_role)
+                self.current.assign(player, opponent_role)
+                self.current.assign(opponent, player_role)
 
         r = TROUBLEMAKER
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            opp1 = player.select(self.active_players())
-            opp2 = player.select([p for p in self.players if p.active and p != opp1])
-            opp1_role = self.current.get(opp1)
-            self.current.assign(opp1, self.current.get(opp2))
-            self.current.assign(opp2, opp1_role)
+            msg = '%s, wake up. You may swap the cards of two other players.'
+            opp1 = player.select(msg, self.active_players() + [None])
+            if opp1:
+                msg = '...and the other player.'
+                opp2 = player.select(msg, [p for p in self.players if p.active and p != opp1])
+                opp1_role = self.current.get(opp1)
+                self.current.assign(opp1, self.current.get(opp2))
+                self.current.assign(opp2, opp1_role)
 
         r = DRUNK
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            center = player.select([p for p in self.players if not p.active])
+            msg = '%s, wake up. Select a card from the center to swap with your own.' % r
+            center = player.select(msg, [p for p in self.players if not p.active])
             center_role = self.current.get(center)
             self.current.assign(center, self.current.get(player))
             self.current.assign(player, center_role)
@@ -133,7 +150,8 @@ class Game:
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            player.inform(player, self.current.get(player))
+            msg = '%s, wake up. Look at your card.' % r
+            player.inform(msg, Final(player, self.current.get(player)))
 
         print
         print self.current

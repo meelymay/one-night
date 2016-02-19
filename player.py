@@ -1,3 +1,7 @@
+import random
+from night import Night
+
+
 class CardSlot:
     def __init__(self, name):
         self.name = name
@@ -7,18 +11,31 @@ class CardSlot:
 
 
 class Player(CardSlot):
-    def __init__(self, name, inform=lambda x, y: None, ask=lambda x, y: 0):
+    def __init__(self, name, inform=lambda msg, statement: None, ask=lambda msg, options: 0):
         self.name = name
         self.active = True
         self.inform_me = inform
         self.ask_me = ask
 
-    def inform(self, player, role):
-        self.inform_me(player, role)
+    def inform(self, msg, statement):
+        self.inform_me(msg, statement)
 
-    def select(self, options):
-        option = self.ask_me(options)
+    def select(self, msg, options):
+        option = self.ask_me(msg, options)
         return option
+
+
+class AIPlayer(CardSlot):
+    def __init__(self, name):
+        self.name = name
+        self.active = True
+        self.night = Night()
+
+    def inform(self, msg, statement):
+        self.night.incorporate(statement)
+
+    def select(self, msg, options):
+        return random.choice(options)
 
 
 class Center(CardSlot):

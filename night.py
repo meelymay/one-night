@@ -8,25 +8,27 @@ class Night:
         empty_ass = {}
         for p in players:
             empty_ass[p] = None
-        self.originals = assignment.Assignment(empty_ass, roles)
-        self.finals = assignment.Assignment(empty_ass, roles)
+        self.assignments = {}
+        for state in ASSIGNMENT_STATES:
+            self.assignments[state] = assignment.Assignment(empty_ass, roles)
         self.roles = roles
         self.swaps = {}
         self.statements = {}
 
     def __str__(self):
         s = ''
-        s += 'Originals:\n' + str(self.originals)
+        s += 'Originals:\n' + str(self.assignments[ORIGINAL])
         s += 'Swaps:\n'
         for swap in self.swaps.values():
             s += '\t%s\n' % swap
-        s += 'Finals:\n' + str(self.finals)
+        s += 'Finals:\n' + str(self.assignments[FINAL])
         return s
 
     def deep_copy(self):
         n = Night(self.roles, self.players)
-        n.originals = self.originals.copy()
-        n.finals = self.finals.copy()
+        n.assignments = {}
+        for state in ASSIGNMENT_STATES:
+            n.assignments = self.assignments[state].copy()
         n.swaps = dict(self.swaps)
         n.statements = dict(self.statements)
         return n
@@ -37,8 +39,8 @@ class Night:
 
         if statement.type == SWAP:
             self.swaps[statement.swapper] = statement
-        elif statement.type in [ORIGINAL, FINAL]:
-            a = self.finals if statement.type == FINAL else self.originals
+        elif statement.type in ASSIGNMENT_STATES:
+            a = self.assignments[statement.type]
             p = statement.player
             r = statement.role
             a.assign(p, r)
@@ -55,7 +57,7 @@ class Night:
     # TODO pretty sure has all swaps doesn't work
     def has_all_swaps(self, swaps=None, originals=None):
         swaps = swaps if swaps else self.swaps
-        originals = originals if originals else self.originals.copy()
+        originals = originals if originals else self.assignments[ORIGINAL].copy()
 
         centers = originals.centers()
         for r in filter(lambda x: x in self.roles, SWAPPERS):
@@ -71,14 +73,14 @@ class Night:
             swaps = dict(self.swaps)
             swaps[statement.swapper] = statement
             for swap in swaps.values():
-                if not self.originals.has_role(swap.swapper):
+                if not self.assignments[ORIGINAL].has_role(swap.swapper):
                     print 'There is no %s in the game yet.' % swap.swapper
                     return False
-                if swap.swapper == ROBBER and not self.originals.player_is_role(swap.p1, ROBBER):
+                if swap.swapper == ROBBER and not self.assignments[ORIGINAL].player_is_role(swap.p1, ROBBER):
                     print 'Robber must swap himself.'
                     return False
             if self.has_all_swaps(swaps=swaps):
-                if not self.originals.play_swaps(swaps).matches(self.finals):
+                if not self.assignments[ORIGINAL].play_swaps(swaps).matches(self.assignments[FINAL]):
                     return False
             return True
 
@@ -86,7 +88,7 @@ class Night:
         r = statement.role
 
         if statement.type in [FINAL, ORIGINAL]:
-            assignments = self.originals.copy() if statement.type == ORIGINAL else self.finals.copy()
+            assignments = self.assignments[ORIGINAL].copy() if statement.type == ORIGINAL else self.assignments[FINAL].copy()
             if not assignments.player_is_role(p, r, flex=True):
                 print '%s is the %s, not the %s (%s).' % (p, assignments.get(p), r, ADVERB[statement.type])
                 return False
@@ -95,12 +97,12 @@ class Night:
                 print 'There are too many %ss.' % r
                 return False
             if (statement.type == ORIGINAL and self.has_all_swaps(originals=assignments) and
-               not assignments.play_swaps(self.swaps).matches(self.finals)):
+               not assignments.play_swaps(self.swaps).matches(self.assignments[FINAL])):
                 print 'Swaps after changing originals are inconsistent.'
                 return False
             elif (statement.type == FINAL and
                   self.has_all_swaps() and
-                  not self.originals.play_swaps(self.swaps).matches(assignments)):
+                  not self.assignments[ORIGINAL].play_swaps(self.swaps).matches(assignments)):
                 print 'Swaps are inconsistent with new finals.'
                 return False
             return True

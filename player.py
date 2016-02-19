@@ -25,6 +25,12 @@ class Player(CardSlot):
         return option
 
 
+class Center(CardSlot):
+    def __init__(self, id):
+        self.name = 'center%s' % id
+        self.active = False
+
+
 class AIPlayer(CardSlot):
     def __init__(self, name, roles, players):
         self.name = name
@@ -33,12 +39,7 @@ class AIPlayer(CardSlot):
 
     def inform(self, msg, statement):
         self.night.incorporate(statement)
+        print self.night
 
     def select(self, msg, options):
         return random.choice(options)
-
-
-class Center(CardSlot):
-    def __init__(self, id):
-        self.name = 'center%s' % id
-        self.active = False

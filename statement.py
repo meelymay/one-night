@@ -1,9 +1,23 @@
 SWAP = 0
 ORIGINAL = 1
-FINAL = 2
+AFTER_DOPPLE = 2
+AFTER_ROBBER = 3
+AFTER_TROUBLEMAKER = 4
+FINAL = 5
+
+ASSIGNMENT_STATES = [
+    ORIGINAL,
+    AFTER_DOPPLE,
+    AFTER_ROBBER,
+    AFTER_TROUBLEMAKER,
+    FINAL
+]
 
 ADVERB = {
     ORIGINAL: 'originally',
+    AFTER_DOPPLE: 'after the Doppleganger',
+    AFTER_ROBBER: 'after the Robber',
+    AFTER_TROUBLEMAKER: 'after the Troublemaker',
     FINAL: 'finally'
 }
 
@@ -40,21 +54,11 @@ class Swap(Statement):
         return '%s swaps %s for %s' % (self.swapper, self.p1, self.p2)
 
 
-class Original(Statement):
-    def __init__(self, player, role):
+class RoleClaim(Statement):
+    def __init__(self, player, role, state):
         self.player = player
         self.role = role
-        self.type = ORIGINAL
+        self.type = state
 
     def __str__(self):
-        return '%s started as the %s' % (self.player, self.role)
-
-
-class Final(Statement):
-    def __init__(self, player, role):
-        self.player = player
-        self.role = role
-        self.type = FINAL
-
-    def __str__(self):
-        return '%s is now the %s' % (self.player, self.role)
+        return '%s was the %s (%s)' % (self.player, self.role, ADVERB[self.type])

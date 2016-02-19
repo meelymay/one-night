@@ -29,21 +29,21 @@ class TestNight(unittest.TestCase):
     def test_can_add_start_role(self):
         r = Role(VILLAGER)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
-        s = Original(amelia, r)
+        s = RoleClaim(amelia, r, ORIGINAL)
         self.assertTrue(n.incorporate(s))
-        self.assertEqual(n.originals.get(amelia), r)
+        self.assertEqual(n.assignments[ORIGINAL].get(amelia), r)
         self.assertTrue(n.is_consistent(s))
-        s2 = Original(amelia, Role(WEREWOLF))
+        s2 = RoleClaim(amelia, Role(WEREWOLF), ORIGINAL)
         self.assertFalse(n.is_consistent(s2))
 
     def test_can_add_multiple_start_roles(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
-        s1 = Original(amelia, Role(VILLAGER))
-        s2 = Original(bob, Role(WEREWOLF))
-        s3 = Original(chad, Role(TROUBLEMAKER))
-        s4 = Original(dan, Role(SEER))
-        s5 = Original(eno, Role(ROBBER))
+        s1 = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        s2 = RoleClaim(bob, Role(WEREWOLF), ORIGINAL)
+        s3 = RoleClaim(chad, Role(TROUBLEMAKER), ORIGINAL)
+        s4 = RoleClaim(dan, Role(SEER), ORIGINAL)
+        s5 = RoleClaim(eno, Role(ROBBER), ORIGINAL)
         self.assertTrue(n.incorporate(s1))
         self.assertTrue(n.incorporate(s2))
         self.assertTrue(n.incorporate(s3))
@@ -53,39 +53,39 @@ class TestNight(unittest.TestCase):
     def test_can_add_final_role(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         r = Role(VILLAGER)
-        s = Final(amelia, r)
+        s = RoleClaim(amelia, r, FINAL)
         self.assertTrue(n.incorporate(s))
-        self.assertEqual(n.finals.get(amelia), r)
+        self.assertEqual(n.assignments[FINAL].get(amelia), r)
 
     def test_can_add_start_and_final(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         r = Role(VILLAGER)
-        s1 = Original(amelia, r)
-        s2 = Final(amelia, r)
+        s1 = RoleClaim(amelia, r, ORIGINAL)
+        s2 = RoleClaim(amelia, r, FINAL)
         self.assertTrue(n.incorporate(s1))
         self.assertTrue(n.incorporate(s2))
 
     def test_can_add_different_start_and_final(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
-        s1 = Original(amelia, Role(VILLAGER))
-        s2 = Final(amelia, Role(WEREWOLF))
+        s1 = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        s2 = RoleClaim(amelia, Role(WEREWOLF), FINAL)
         self.assertTrue(n.incorporate(s1))
         self.assertTrue(n.incorporate(s2))
 
     def test_more_than_one_role(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         r = Role(ROBBER)
-        s1 = Final(amelia, r)
-        s2 = Final(dan, r)
+        s1 = RoleClaim(amelia, r, FINAL)
+        s2 = RoleClaim(dan, r, FINAL)
         self.assertTrue(n.incorporate(s1))
         self.assertFalse(n.incorporate(s2))
 
     def test_too_many_roles(self):
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
         r = Role(VILLAGER)
-        s1 = Final(amelia, r)
-        s2 = Final(dan, r)
-        s3 = Final(bob, r)
+        s1 = RoleClaim(amelia, r, FINAL)
+        s2 = RoleClaim(dan, r, FINAL)
+        s3 = RoleClaim(bob, r, FINAL)
         self.assertTrue(n.incorporate(s1))
         self.assertTrue(n.incorporate(s2))
         self.assertFalse(n.incorporate(s3))
@@ -96,7 +96,7 @@ class TestNight(unittest.TestCase):
         self.assertFalse(n.incorporate(s))
 
     def test_empty_swap(self):
-        t = Original(dan, Role(TROUBLEMAKER))
+        t = RoleClaim(dan, Role(TROUBLEMAKER), ORIGINAL)
         s = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
@@ -104,9 +104,9 @@ class TestNight(unittest.TestCase):
         self.assertTrue(n.incorporate(s))
 
     def test_swap(self):
-        t = Original(dan, Role(TROUBLEMAKER))
-        v = Original(amelia, Role(VILLAGER))
-        w = Original(bob, Role(WEREWOLF))
+        t = RoleClaim(dan, Role(TROUBLEMAKER), ORIGINAL)
+        v = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        w = RoleClaim(bob, Role(WEREWOLF), ORIGINAL)
         swap = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
@@ -116,9 +116,9 @@ class TestNight(unittest.TestCase):
         self.assertTrue(n.incorporate(swap))
 
     def test_unfinished_swap(self):
-        t = Original(dan, Role(TROUBLEMAKER))
-        v = Original(amelia, Role(VILLAGER))
-        w = Final(bob, Role(WEREWOLF))
+        t = RoleClaim(dan, Role(TROUBLEMAKER), ORIGINAL)
+        v = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        w = RoleClaim(bob, Role(WEREWOLF), FINAL)
         swap = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
@@ -128,10 +128,10 @@ class TestNight(unittest.TestCase):
         self.assertTrue(n.incorporate(swap))
 
     def test_lying_swap(self):
-        t = Original(dan, Role(TROUBLEMAKER))
-        v = Original(amelia, Role(VILLAGER))
-        w = Final(bob, Role(WEREWOLF))
-        c = Original(c1, Role(ROBBER))
+        t = RoleClaim(dan, Role(TROUBLEMAKER), ORIGINAL)
+        v = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        w = RoleClaim(bob, Role(WEREWOLF), FINAL)
+        c = RoleClaim(c1, Role(ROBBER), ORIGINAL)
         swap = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 
@@ -142,11 +142,11 @@ class TestNight(unittest.TestCase):
         self.assertFalse(n.incorporate(swap))
 
     def test_verified_swap(self):
-        t = Original(dan, Role(TROUBLEMAKER))
-        v = Original(amelia, Role(VILLAGER))
-        v2 = Final(amelia, Role(WEREWOLF))
-        w = Original(bob, Role(WEREWOLF))
-        w2 = Final(bob, Role(VILLAGER))
+        t = RoleClaim(dan, Role(TROUBLEMAKER), ORIGINAL)
+        v = RoleClaim(amelia, Role(VILLAGER), ORIGINAL)
+        v2 = RoleClaim(amelia, Role(WEREWOLF), FINAL)
+        w = RoleClaim(bob, Role(WEREWOLF), ORIGINAL)
+        w2 = RoleClaim(bob, Role(VILLAGER), FINAL)
         swap = Swap(Role(TROUBLEMAKER), amelia, bob)
         n = night.Night(DEFAULT_ROLES, DEFAULT_PLAYERS)
 

@@ -120,7 +120,7 @@ class Game:
             if opponent:
                 opponent_role = self.current.get(opponent)
                 player_role = self.current.get(player)
-                player.inform(opponent, opponent_role)
+                player.inform('You look at your new card.', Final(opponent, opponent_role))
                 self.current.assign(player, opponent_role)
                 self.current.assign(opponent, player_role)
 

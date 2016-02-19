@@ -1,18 +1,19 @@
 import random
 from role import *
-from player import Player, Center
+from player import Player, AIPlayer, Center
 from statement import *
 from assignment import Assignment
 from collections import defaultdict
 
 
 class Game:
-    def __init__(self, players, roles):
-        if len(roles) != len(players) + 3:
-            raise Exception('you done fd up. %s +3 != %s' % (players, roles))
+    def __init__(self, players, roles, include_ai=False):
+        if len(roles) != len(players) + 3 + (1 if include_ai else 0):
+            raise Exception('you done fd up. %s != %s' % (players, roles))
 
         self.roles = [Role(r) for r in roles]
         self.players = [Player(p.name, inform=p.inform, ask=p.ask) for p in players] + [Center(i) for i in range(3)]
+        self.players.append(AIPlayer('HAL', self.roles, self.players))
         self.assignment = Assignment({}, roles)
         self.assign()
         self.inform_players()

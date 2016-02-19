@@ -26,10 +26,10 @@ class Player(CardSlot):
 
 
 class AIPlayer(CardSlot):
-    def __init__(self, name):
+    def __init__(self, name, roles, players):
         self.name = name
         self.active = True
-        self.night = Night()
+        self.night = Night(roles, players+[self])
 
     def inform(self, msg, statement):
         self.night.incorporate(statement)

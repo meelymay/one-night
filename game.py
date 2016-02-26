@@ -1,4 +1,5 @@
 import random
+import traceback
 from role import *
 from player import Player, AIPlayer, Center
 from statement import *
@@ -7,13 +8,14 @@ from collections import defaultdict
 
 
 class Game:
-    def __init__(self, players, roles, include_ai=False):
-        if len(roles) != len(players) + 3 + (1 if include_ai else 0):
+    def __init__(self, players, roles, include_ai=0):
+        if len(roles) != len(players) + 3 + (include_ai):
             raise Exception('you done fd up. %s != %s' % (players, roles))
 
         self.roles = [Role(r) for r in roles]
         self.players = [Player(p.name, inform=p.inform, ask=p.ask) for p in players] + [Center(i) for i in range(3)]
-        self.players.append(AIPlayer('HAL', self.roles, self.players))
+        for i in range(include_ai):
+            self.players.append(AIPlayer('AI_' + str(i), self.roles, self.players))
         self.assignment = Assignment({}, roles)
         self.assign()
         self.inform_players()
@@ -28,12 +30,15 @@ class Game:
             self.originals[player] = roles[ri]
             del roles[ri]
 
-    def inform_players(self):
+    def inform_players(self, some_msg=None):
         for player in self.players:
             if player.active:
-                msg = 'You look at your card.'
-                statement = Original(player, self.assignment.get(player))
-                player.inform(msg, statement)
+                if some_msg is not None:
+                    player.inform(some_msg, None)
+                else:
+                    msg = 'You look at your card.'
+                    statement = RoleClaim(player, self.assignment.get(player), ORIGINAL)
+                    player.inform(msg, statement)
 
     def active_players(self):
         return [p for p in self.players if p.active]
@@ -72,11 +77,11 @@ class Game:
             for opponent in ps:
                 if player != opponent:
                     msg = '%s, wake up. See the other werewolves.' % r
-                    player.inform(msg, Original(opponent, WEREWOLF))
+                    player.inform(msg, RoleClaim(opponent, WEREWOLF, ORIGINAL))
             if len(ps) == 1:
                 msg = 'Werewolf, wake up. You may choose a card from the center to look at.'
                 opponent = player.select(msg, [p for p in self.players if not p.active])
-                player.inform('You learn:', Original(opponent, self.current.get(opponent)))
+                player.inform('You learn:', RoleClaim(opponent, self.current.get(opponent), ORIGINAL))
 
         r = MINION
         werewolves = ps
@@ -85,7 +90,7 @@ class Game:
             player = ps[0]
             for w in werewolves:
                 msg = '%s, wake up. See the werewolves.' % r
-                player.inform(msg, Original(w, WEREWOLF))
+                player.inform(msg, RoleClaim(w, WEREWOLF, ORIGINAL))
 
         r = MASON
         ps = self.get_players_for_role(r, solo=False)
@@ -93,7 +98,7 @@ class Game:
             for opponent in ps:
                 if player != opponent:
                     msg = '%s, wake up. See the other masons.' % r
-                    player.inform(msg, Original(opponent, MASON))
+                    player.inform(msg, RoleClaim(opponent, MASON, ORIGINAL))
 
         r = SEER
         ps = self.get_players_for_role(r)
@@ -106,10 +111,10 @@ class Game:
             active = choice == opponents_card
             msg = 'Seer, select a card to look at.'
             opponent = player.select(msg, [p for p in self.players if p.active == active])
-            player.inform('You learn', Original(opponent, self.current.get(opponent)))
+            player.inform('You learn', RoleClaim(opponent, self.current.get(opponent), AFTER_DOPPLE))
             if not active:
                 opponent = player.select(msg, [p for p in self.players if p.active == active])
-                player.inform('You learn:', Original(opponent, self.current.get(opponent)))
+                player.inform('You learn:', RoleClaim(opponent, self.current.get(opponent), AFTER_DOPPLE))
 
         r = ROBBER
         ps = self.get_players_for_role(r)
@@ -120,7 +125,9 @@ class Game:
             if opponent:
                 opponent_role = self.current.get(opponent)
                 player_role = self.current.get(player)
-                player.inform('You look at your new card.', Final(opponent, opponent_role))
+                player.inform('You look at your new card.', RoleClaim(player, opponent_role, AFTER_ROBBER))
+                player.inform('Which means...', RoleClaim(opponent, player_role, AFTER_ROBBER))
+                player.inform('and...', RoleClaim(opponent, opponent_role, AFTER_DOPPLE))
                 self.current.assign(player, opponent_role)
                 self.current.assign(opponent, player_role)
 
@@ -128,7 +135,8 @@ class Game:
         ps = self.get_players_for_role(r)
         if ps:
             player = ps[0]
-            msg = '%s, wake up. You may swap the cards of two other players.'
+            msg = '%s, wake up. You may swap the cards of two other players.' % r
+            # TODO cannot swap with self
             opp1 = player.select(msg, self.active_players() + [None])
             if opp1:
                 msg = '...and the other player.'
@@ -152,7 +160,7 @@ class Game:
         if ps:
             player = ps[0]
             msg = '%s, wake up. Look at your card.' % r
-            player.inform(msg, Final(player, self.current.get(player)))
+            player.inform(msg, RoleClaim(player, self.current.get(player), FINAL))
 
         print
         print self.current

@@ -1,3 +1,5 @@
+from statement import *
+
 VILLAGER = 'villager'
 WEREWOLF = 'werewolf'
 ROBBER = 'robber'
@@ -21,7 +23,13 @@ ORDER = [DOPPLEGANGER,
          DRUNK,
          INSOMNIAC]
 
-SWAPPERS = [DOPPLEGANGER, ROBBER, TROUBLEMAKER, DRUNK]
+SWAPPERS = {
+    None: ORIGINAL,
+    DOPPLEGANGER: AFTER_DOPPLE,
+    ROBBER: AFTER_ROBBER,
+    TROUBLEMAKER: AFTER_TROUBLEMAKER,
+    DRUNK: FINAL
+}
 
 
 class Role:

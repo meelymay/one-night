@@ -1,4 +1,5 @@
 import random
+from model import Model
 from night import Night
 
 
@@ -18,7 +19,8 @@ class Player(CardSlot):
         self.ask_me = ask
 
     def inform(self, msg, statement):
-        self.inform_me(msg, statement)
+        if statement:
+            self.inform_me(msg, statement)
 
     def select(self, msg, options):
         option = self.ask_me(msg, options)
@@ -35,11 +37,20 @@ class AIPlayer(CardSlot):
     def __init__(self, name, roles, players):
         self.name = name
         self.active = True
-        self.night = Night(roles, players+[self])
+        self.model = Model(Night(roles, players+[self]))
 
     def inform(self, msg, statement):
-        self.night.incorporate(statement)
-        print self.night
+        print 'AI being informed:'
+        if not statement:
+            print '\tnot statement:', statement
+            print '\tParsing msg:', msg
+            statement = self.model.construct_statement(msg)
+            if not statement:
+                print 'Could not interpret "%s"' % msg
+                return
+        print '\tIncorporating statement:', statement
+        self.model.incorporate(statement)
+        print self.model
 
     def select(self, msg, options):
         return random.choice(options)

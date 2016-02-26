@@ -87,8 +87,8 @@ class Night:
         p = statement.player
         r = statement.role
 
-        if statement.type in [FINAL, ORIGINAL]:
-            assignments = self.assignments[ORIGINAL].copy() if statement.type == ORIGINAL else self.assignments[FINAL].copy()
+        if statement.type in ASSIGNMENT_STATES:
+            assignments = self.assignments[statement.type].copy()
             if not assignments.player_is_role(p, r, flex=True):
                 print '%s is the %s, not the %s (%s).' % (p, assignments.get(p), r, ADVERB[statement.type])
                 return False

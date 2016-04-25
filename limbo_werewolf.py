@@ -12,10 +12,6 @@ import one_night.role as role
 
 GAME = None
 MYSELF = 'U0LFPJJLR'
-# SLACK_TOKEN=xoxb-20533630705-lMfeByO7FocRmyp4Kvco8Ws1
-# MYSELF = 'U0M5CE3DY'
-# SLACK_TOKEN=xoxb-21182479474-0WZybLdxK9JnQbeWsKxRFIxi
-
 
 class SimplePlayer:
     def __init__(self, name, inform, ask):
